@@ -26,4 +26,4 @@ RUN mkdir -p instance
 EXPOSE 5000
 
 # Set production WSGI execution
-CMD ["gunicorn", "--workers", "4", "--bind", "0.0.0.0:5000", "app:app"]
+CMD gunicorn --workers 4 --bind 0.0.0.0:$PORT app:app
