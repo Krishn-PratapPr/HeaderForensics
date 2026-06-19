@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
+import { MapOff } from 'lucide-react';
 
 // Import CSS inside JS to ensure Leaflet styles are applied (or via index.css import)
 // We already included Leaflet styles in index.css
@@ -44,7 +45,7 @@ export default function MapWidget({ ip, geolocation, provider }) {
   if (!hasIpinfoCoords && !hasIpApiCoords) {
     return (
       <div className="flex flex-col items-center justify-center bg-slate-50 border border-slate-200 rounded-lg p-8 text-center text-slate-500 min-h-[300px]">
-        <span className="text-2xl mb-2">🗺️</span>
+        <MapOff className="w-8 h-8 text-slate-400 mb-2" />
         <p className="text-sm font-semibold">Map unavailable — no coordinates returned</p>
         <p className="text-xs text-slate-400 mt-1">Both geolocation providers failed to return valid coordinates.</p>
       </div>

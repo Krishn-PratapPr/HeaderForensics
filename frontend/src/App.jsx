@@ -88,7 +88,10 @@ export default function App() {
       {/* Footer block */}
       <footer className="bg-white border-t border-slate-200 py-4 sm:py-6 text-center text-xs text-slate-400">
         <div className="max-w-7xl mx-auto px-4 space-y-1.5 sm:space-y-2 select-text">
-          <p className="font-medium text-[11px] sm:text-xs leading-relaxed">🛡️ Email Header Analyzer Forensic Suite — B&W Printer Laser Friendly Reports Enabled</p>
+          <p className="font-medium text-[11px] sm:text-xs leading-relaxed inline-flex items-center justify-center gap-1">
+            <Shield className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-slate-400" />
+            Email Header Analyzer Forensic Suite — B&W Printer Laser Friendly Reports Enabled
+          </p>
           <p className="text-[9px] sm:text-[10px] leading-relaxed">
             Statutory Forensic Policy: This tool is intended for information security investigation and evidence cataloging.
           </p>

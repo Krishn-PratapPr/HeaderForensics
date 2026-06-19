@@ -231,7 +231,10 @@ export default function Dashboard() {
   return (
     <div className="flex-1 w-full max-w-7xl mx-auto px-3 sm:px-4 py-5 sm:py-8">
       <div className="text-center mb-5 sm:mb-8">
-        <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-slate-800 tracking-tight">🛡️ Email Header Analyzer</h1>
+        <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-slate-800 tracking-tight flex items-center justify-center gap-2">
+          <ShieldCheck className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 text-blue-600" />
+          Email Header Analyzer
+        </h1>
         <p className="text-xs sm:text-sm text-slate-500 mt-1.5 max-w-xl mx-auto px-2">
           Analyze SMTP relays, SPF/DKIM flags, and originating IP addresses to perform forensics on electronic evidence files.
         </p>

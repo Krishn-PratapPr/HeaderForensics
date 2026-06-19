@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import axiosInstance from '../api/axiosConfig';
 import { 
   Search, Trash2, Download, AlertTriangle, 
-  X, CheckCircle, HelpCircle, Calendar 
+  X, CheckCircle, HelpCircle, Calendar,
+  FolderOpen, Loader2
 } from 'lucide-react';
 
 export default function Registry() {
@@ -113,7 +114,10 @@ export default function Registry() {
     <div className="flex-1 w-full max-w-7xl mx-auto px-3 sm:px-4 py-5 sm:py-8">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 mb-6 sm:mb-8">
         <div>
-          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-slate-800 tracking-tight">📁 Flagged IP Registry</h1>
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-slate-800 tracking-tight flex items-center gap-2">
+            <FolderOpen className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 text-blue-600" />
+            Flagged IP Registry
+          </h1>
           <p className="text-xs sm:text-sm text-slate-500 mt-1">
             Search, export, and manage historical evidence flags for malicious originating mail servers.
           </p>
@@ -210,7 +214,7 @@ export default function Registry() {
       <div className="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden select-text">
         {isLoading ? (
           <div className="py-12 text-center text-slate-500 text-sm">
-            <span className="animate-spin inline-block mr-2">⏳</span> Loading registry entries...
+            <Loader2 className="w-4 h-4 animate-spin inline-block mr-2 text-slate-400" /> Loading registry entries...
           </div>
         ) : records.length === 0 ? (
           <div className="py-12 text-center text-slate-500 text-sm">
