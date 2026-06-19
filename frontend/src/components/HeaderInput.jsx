@@ -98,33 +98,33 @@ export default function HeaderInput({ onAnalyze, isLoading }) {
   };
 
   return (
-    <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6 max-w-4xl mx-auto">
+    <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-4 sm:p-6 max-w-4xl mx-auto">
       {/* Tabs */}
-      <div className="flex border-b border-slate-200 mb-6">
+      <div className="flex border-b border-slate-200 mb-4 sm:mb-6 -mx-4 sm:mx-0 px-4 sm:px-0 overflow-x-auto">
         <button
           type="button"
           onClick={() => { setActiveMethod('paste'); setErrorMsg(''); }}
-          className={`flex items-center gap-2 px-5 py-3 border-b-2 font-medium text-sm transition-colors ${
+          className={`flex items-center gap-1.5 sm:gap-2 px-3 sm:px-5 py-2.5 sm:py-3 border-b-2 font-medium text-xs sm:text-sm transition-colors whitespace-nowrap ${
             activeMethod === 'paste'
               ? 'border-blue-600 text-blue-600 font-semibold'
               : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
           }`}
         >
-          <Clipboard className="w-4 h-4" />
-          Paste Raw Headers
+          <Clipboard className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+          Paste Headers
         </button>
         <button
           type="button"
           onClick={() => { setActiveMethod('upload'); setErrorMsg(''); }}
-          className={`flex items-center gap-2 px-5 py-3 border-b-2 font-medium text-sm transition-colors ${
+          className={`flex items-center gap-1.5 sm:gap-2 px-3 sm:px-5 py-2.5 sm:py-3 border-b-2 font-medium text-xs sm:text-sm transition-colors whitespace-nowrap ${
             activeMethod === 'upload'
               ? 'border-blue-600 text-blue-600 font-semibold'
               : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
           }`}
         >
-          <Upload className="w-4 h-4" />
-          Upload .eml File
-          <span className="bg-emerald-50 text-emerald-700 text-[10px] px-2 py-0.5 rounded-full border border-emerald-200 font-medium">
+          <Upload className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+          Upload .eml
+          <span className="bg-emerald-50 text-emerald-700 text-[9px] sm:text-[10px] px-1.5 sm:px-2 py-0.5 rounded-full border border-emerald-200 font-medium hidden xs:inline">
             Recommended
           </span>
         </button>
@@ -176,7 +176,7 @@ export default function HeaderInput({ onAnalyze, isLoading }) {
           <div
             onDrop={handleDrop}
             onDragOver={handleDragOver}
-            className="border-2 border-dashed border-slate-300 hover:border-blue-500 bg-slate-50 rounded-lg p-8 text-center cursor-pointer transition-colors"
+            className="border-2 border-dashed border-slate-300 hover:border-blue-500 bg-slate-50 rounded-lg p-5 sm:p-8 text-center cursor-pointer transition-colors"
             onClick={() => fileInputRef.current.click()}
           >
             <FileCode className="w-10 h-10 mx-auto text-slate-400 mb-3" />
@@ -218,7 +218,7 @@ export default function HeaderInput({ onAnalyze, isLoading }) {
         </button>
         
         {showHelp && (
-          <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4 text-xs text-slate-600 border-l-2 border-blue-500 pl-4 py-2">
+          <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 text-xs text-slate-600 border-l-2 border-blue-500 pl-4 py-2">
             <div>
               <h4 className="font-semibold text-slate-800 mb-1.5">Gmail</h4>
               <ol className="list-decimal list-inside space-y-1">

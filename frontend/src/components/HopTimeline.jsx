@@ -14,7 +14,7 @@ export default function HopTimeline({ hops }) {
   };
 
   return (
-    <div className="relative border-l-2 border-slate-200 ml-4 pl-6 space-y-6">
+    <div className="relative border-l-2 border-slate-200 ml-2 sm:ml-4 pl-4 sm:pl-6 space-y-6">
       {hops.map((hop, index) => {
         const isFirst = index === 0;
         const isLast = index === hops.length - 1;
@@ -55,7 +55,7 @@ export default function HopTimeline({ hops }) {
             </div>
 
             {/* Timeline Connector Card */}
-            <div className={`border rounded-lg p-4 shadow-sm transition-all ${borderClass} ${cardBgClass}`}>
+            <div className={`border rounded-lg p-3 sm:p-4 shadow-sm transition-all ${borderClass} ${cardBgClass}`}>
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
                 <div className="flex items-center gap-2">
                   <span className={`text-xs font-semibold px-2 py-0.5 rounded ${

@@ -110,11 +110,11 @@ export default function Registry() {
   };
 
   return (
-    <div className="flex-1 w-full max-w-7xl mx-auto px-4 py-8">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+    <div className="flex-1 w-full max-w-7xl mx-auto px-3 sm:px-4 py-5 sm:py-8">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 mb-6 sm:mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-slate-800 tracking-tight">📁 Flagged IP Registry</h1>
-          <p className="text-sm text-slate-500 mt-1">
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-slate-800 tracking-tight">📁 Flagged IP Registry</h1>
+          <p className="text-xs sm:text-sm text-slate-500 mt-1">
             Search, export, and manage historical evidence flags for malicious originating mail servers.
           </p>
         </div>
@@ -122,7 +122,7 @@ export default function Registry() {
           type="button"
           onClick={handleExportCsv}
           disabled={records.length === 0}
-          className="inline-flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold py-2 px-4 rounded shadow transition-colors disabled:bg-slate-300 disabled:cursor-not-allowed cursor-pointer"
+          className="inline-flex items-center justify-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold py-2 px-4 rounded shadow transition-colors disabled:bg-slate-300 disabled:cursor-not-allowed cursor-pointer w-full sm:w-auto"
         >
           <Download className="w-3.5 h-3.5" />
           Export Search as CSV
@@ -130,7 +130,7 @@ export default function Registry() {
       </div>
 
       {/* Search Filter Form */}
-      <form onSubmit={handleSearchSubmit} className="bg-white border border-slate-200 rounded-lg p-5 mb-6 shadow-sm">
+      <form onSubmit={handleSearchSubmit} className="bg-white border border-slate-200 rounded-lg p-4 sm:p-5 mb-6 shadow-sm">
         <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-4 flex items-center gap-2">
           <Search className="w-4 h-4 text-slate-400" />
           Search Registry Registry Filters
@@ -181,7 +181,7 @@ export default function Registry() {
           </div>
         </div>
 
-        <div className="flex gap-2 justify-end mt-5">
+        <div className="flex flex-col xs:flex-row gap-2 justify-end mt-4 sm:mt-5">
           <button
             type="button"
             onClick={handleClearFilters}

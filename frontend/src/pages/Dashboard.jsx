@@ -4,6 +4,7 @@ import HeaderInput from '../components/HeaderInput';
 import HopTimeline from '../components/HopTimeline';
 import MapWidget from '../components/MapWidget';
 import ConfidenceBadge from '../components/ConfidenceBadge';
+import HowItWorks from '../components/HowItWorks';
 import { 
   FileText, ShieldCheck, ShieldAlert, 
   MapPin, Clock, Server, AlertTriangle, Flag, 
@@ -193,8 +194,8 @@ export default function Dashboard() {
           </div>
           <div>
             <span className="text-xs font-bold text-green-600 uppercase tracking-wider">Security Verdict</span>
-            <h3 className="text-xl font-bold text-green-800">{label}</h3>
-            <p className="text-xs text-green-600 mt-0.5">The email passes standard authenticity alignment checks.</p>
+            <h3 className="text-base sm:text-xl font-bold text-green-800">{label}</h3>
+            <p className="text-[11px] sm:text-xs text-green-600 mt-0.5">The email passes standard authenticity alignment checks.</p>
           </div>
         </div>
       );
@@ -206,8 +207,8 @@ export default function Dashboard() {
           </div>
           <div>
             <span className="text-xs font-bold text-amber-600 uppercase tracking-wider">Security Verdict</span>
-            <h3 className="text-xl font-bold text-amber-800">{label}</h3>
-            <p className="text-xs text-amber-600 mt-0.5">Some authentication protocols failed or are missing. Treat with caution.</p>
+            <h3 className="text-base sm:text-xl font-bold text-amber-800">{label}</h3>
+            <p className="text-[11px] sm:text-xs text-amber-600 mt-0.5">Some authentication protocols failed or are missing. Treat with caution.</p>
           </div>
         </div>
       );
@@ -219,8 +220,8 @@ export default function Dashboard() {
           </div>
           <div>
             <span className="text-xs font-bold text-red-600 uppercase tracking-wider">Security Verdict</span>
-            <h3 className="text-xl font-bold text-red-800">{label}</h3>
-            <p className="text-xs text-red-600 mt-0.5">Critical authentication failures. High probability of sender spoofing.</p>
+            <h3 className="text-base sm:text-xl font-bold text-red-800">{label}</h3>
+            <p className="text-[11px] sm:text-xs text-red-600 mt-0.5">Critical authentication failures. High probability of sender spoofing.</p>
           </div>
         </div>
       );
@@ -228,13 +229,16 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="flex-1 w-full max-w-7xl mx-auto px-4 py-8">
-      <div className="text-center mb-8">
-        <h1 className="text-3xl font-bold text-slate-800 tracking-tight">🛡️ Email Header Analyzer</h1>
-        <p className="text-sm text-slate-500 mt-1.5 max-w-xl mx-auto">
+    <div className="flex-1 w-full max-w-7xl mx-auto px-3 sm:px-4 py-5 sm:py-8">
+      <div className="text-center mb-5 sm:mb-8">
+        <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-slate-800 tracking-tight">🛡️ Email Header Analyzer</h1>
+        <p className="text-xs sm:text-sm text-slate-500 mt-1.5 max-w-xl mx-auto px-2">
           Analyze SMTP relays, SPF/DKIM flags, and originating IP addresses to perform forensics on electronic evidence files.
         </p>
       </div>
+
+      {/* How It Works Section */}
+      <HowItWorks />
 
       {/* Input Section */}
       <HeaderInput onAnalyze={handleAnalyze} isLoading={isLoading} />
@@ -254,18 +258,18 @@ export default function Dashboard() {
       {analysisData && (
         <div className="mt-8 space-y-6 max-w-6xl mx-auto">
           {/* Action Row */}
-          <div className="flex flex-wrap items-center justify-between gap-4 bg-slate-100 p-3 rounded-lg border border-slate-200 shadow-sm">
+          <div className="flex flex-col sm:flex-row sm:flex-wrap items-start sm:items-center justify-between gap-3 sm:gap-4 bg-slate-100 p-3 rounded-lg border border-slate-200 shadow-sm">
             <div className="flex items-center gap-2">
               <span className="text-xs font-semibold text-slate-500">Originating IP:</span>
-              <span className="font-mono text-sm font-bold bg-white text-slate-700 border border-slate-350 px-2 py-0.5 rounded shadow-sm">
+              <span className="font-mono text-xs sm:text-sm font-bold bg-white text-slate-700 border border-slate-350 px-2 py-0.5 rounded shadow-sm break-all">
                 {analysisData.originating_ip || 'Not resolved'}
               </span>
             </div>
-            <div className="flex items-center gap-2.5">
+            <div className="flex flex-col xs:flex-row items-stretch xs:items-center gap-2 xs:gap-2.5 w-full sm:w-auto">
               <button
                 type="button"
                 onClick={() => setShowReportModal(true)}
-                className="inline-flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold py-2 px-4 rounded shadow transition-colors cursor-pointer"
+                className="inline-flex items-center justify-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold py-2 px-4 rounded shadow transition-colors cursor-pointer"
               >
                 <FileText className="w-3.5 h-3.5" />
                 Generate Evidence Report
@@ -274,7 +278,7 @@ export default function Dashboard() {
                 <button
                   type="button"
                   onClick={() => setShowFlagModal(true)}
-                  className="inline-flex items-center gap-1.5 bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-semibold py-2 px-4 rounded border border-slate-300 transition-colors cursor-pointer"
+                  className="inline-flex items-center justify-center gap-1.5 bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-semibold py-2 px-4 rounded border border-slate-300 transition-colors cursor-pointer"
                 >
                   <Flag className="w-3.5 h-3.5" />
                   Flag this IP
@@ -304,8 +308,8 @@ export default function Dashboard() {
             {/* Spoofing Score Panel */}
             <div className="bg-white border border-slate-200 rounded-lg p-5 flex flex-col justify-center items-center text-center shadow-sm">
               <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Spoofing Risk Score</span>
-              <div className="text-4xl font-extrabold text-slate-800 mt-2">
-                {analysisData.authenticity?.score} <span className="text-lg text-slate-400 font-normal">/ 90</span>
+              <div className="text-3xl sm:text-4xl font-extrabold text-slate-800 mt-2">
+                {analysisData.authenticity?.score} <span className="text-base sm:text-lg text-slate-400 font-normal">/ 90</span>
               </div>
               <div className="w-full bg-slate-100 rounded-full h-2 mt-4 overflow-hidden">
                 <div 
@@ -357,8 +361,8 @@ export default function Dashboard() {
           )}
 
           {/* Email Information Summary */}
-          <div className="bg-white border border-slate-200 rounded-lg shadow-sm p-6">
-            <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider border-b border-slate-100 pb-3 mb-4 flex items-center gap-2">
+          <div className="bg-white border border-slate-200 rounded-lg shadow-sm p-4 sm:p-6">
+            <h3 className="text-xs sm:text-sm font-bold text-slate-800 uppercase tracking-wider border-b border-slate-100 pb-3 mb-4 flex items-center gap-2">
               <Clock className="w-4 h-4 text-slate-500" />
               1. Email Summary Details
             </h3>
@@ -391,15 +395,15 @@ export default function Dashboard() {
           </div>
 
           {/* Authenticity Flags List (F-05) */}
-          <div className="bg-white border border-slate-200 rounded-lg shadow-sm p-6">
-            <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider border-b border-slate-100 pb-3 mb-4 flex items-center gap-2">
+          <div className="bg-white border border-slate-200 rounded-lg shadow-sm p-4 sm:p-6">
+            <h3 className="text-xs sm:text-sm font-bold text-slate-800 uppercase tracking-wider border-b border-slate-100 pb-3 mb-4 flex items-center gap-2">
               <ShieldCheck className="w-4 h-4 text-slate-500" />
               2. Authentication Flags & Risk Breakdown
             </h3>
             
             <div className="space-y-4">
               {/* SPF Check */}
-              <div className="flex items-start gap-4 p-4 border border-slate-150 rounded bg-slate-50">
+              <div className="flex flex-col xs:flex-row items-start gap-2 xs:gap-4 p-3 sm:p-4 border border-slate-150 rounded bg-slate-50">
                 <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${
                   analysisData.authenticity.details.spf.score === 0 
                     ? 'bg-green-100 text-green-800'
@@ -414,7 +418,7 @@ export default function Dashboard() {
               </div>
 
               {/* DKIM Check */}
-              <div className="flex items-start gap-4 p-4 border border-slate-150 rounded bg-slate-50">
+              <div className="flex flex-col xs:flex-row items-start gap-2 xs:gap-4 p-3 sm:p-4 border border-slate-150 rounded bg-slate-50">
                 <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${
                   analysisData.authenticity.details.dkim.score === 0 
                     ? 'bg-green-100 text-green-800'
@@ -429,7 +433,7 @@ export default function Dashboard() {
               </div>
 
               {/* Domain alignment */}
-              <div className="flex items-start gap-4 p-4 border border-slate-150 rounded bg-slate-50">
+              <div className="flex flex-col xs:flex-row items-start gap-2 xs:gap-4 p-3 sm:p-4 border border-slate-150 rounded bg-slate-50">
                 <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${
                   analysisData.authenticity.details.domain_alignment.score === 0 
                     ? 'bg-green-100 text-green-800'
@@ -447,9 +451,9 @@ export default function Dashboard() {
 
           {/* Geolocation Section (F-03 / F-04) */}
           {analysisData.geolocation && (
-            <div className="bg-white border border-slate-200 rounded-lg shadow-sm p-6">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-100 pb-3 mb-5 gap-3">
-                <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
+            <div className="bg-white border border-slate-200 rounded-lg shadow-sm p-4 sm:p-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-100 pb-3 mb-4 sm:mb-5 gap-3">
+                <h3 className="text-xs sm:text-sm font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
                   <MapPin className="w-4 h-4 text-slate-500" />
                   3. Originating Geolocation Profile
                 </h3>
@@ -519,8 +523,8 @@ export default function Dashboard() {
           )}
 
           {/* Mail Server Hop Chain Timeline (F-06) */}
-          <div className="bg-white border border-slate-200 rounded-lg shadow-sm p-6">
-            <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider border-b border-slate-100 pb-3 mb-5 flex items-center gap-2">
+          <div className="bg-white border border-slate-200 rounded-lg shadow-sm p-4 sm:p-6">
+            <h3 className="text-xs sm:text-sm font-bold text-slate-800 uppercase tracking-wider border-b border-slate-100 pb-3 mb-4 sm:mb-5 flex items-center gap-2">
               <Server className="w-4 h-4 text-slate-500" />
               4. Reconstructed Server Hop Chain
             </h3>
