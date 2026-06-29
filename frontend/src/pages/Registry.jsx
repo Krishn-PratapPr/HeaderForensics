@@ -19,6 +19,7 @@ export default function Registry() {
 
   // Delete modal state
   const [deleteTarget, setDeleteTarget] = useState(null); // holds the record object to delete
+  const [adminUsername, setAdminUsername] = useState('');
   const [adminPassword, setAdminPassword] = useState('');
   const [deleteError, setDeleteError] = useState('');
   const [deleteSuccess, setDeleteSuccess] = useState('');
@@ -83,6 +84,10 @@ export default function Registry() {
     setDeleteError('');
     setDeleteSuccess('');
 
+    if (!adminUsername.trim()) {
+      setDeleteError("Admin username is required.");
+      return;
+    }
     if (!adminPassword) {
       setDeleteError("Admin password is required.");
       return;
@@ -91,10 +96,12 @@ export default function Registry() {
     try {
       await axiosInstance.post('/api/registry/delete', {
         id: deleteTarget.id,
-        admin_password: adminPassword
+        username: adminUsername,
+        password: adminPassword
       });
       
       setDeleteSuccess("Record successfully deleted!");
+      setAdminUsername('');
       setAdminPassword('');
       
       // Update local list
@@ -270,7 +277,7 @@ export default function Registry() {
                 <AlertTriangle className="w-4 h-4 text-red-650" />
                 Delete Flag Record
               </h3>
-              <button onClick={() => { setDeleteTarget(null); setDeleteError(''); setDeleteSuccess(''); }} className="text-slate-400 hover:text-slate-600">
+              <button onClick={() => { setDeleteTarget(null); setDeleteError(''); setAdminUsername(''); setAdminPassword(''); setDeleteSuccess(''); }} className="text-slate-400 hover:text-slate-600">
                 <X className="w-4 h-4" />
               </button>
             </div>
@@ -294,13 +301,25 @@ export default function Registry() {
               </p>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Admin Password <span className="text-red-500">*</span></label>
+                <label className="block text-xs font-semibold text-slate-650 uppercase mb-1">Admin Username <span className="text-red-500">*</span></label>
+                <input 
+                  type="text" 
+                  required
+                  value={adminUsername} 
+                  onChange={(e) => setAdminUsername(e.target.value)}
+                  placeholder="Enter admin username to authorize delete" 
+                  className="w-full border border-slate-350 rounded p-2 text-xs focus:ring-1 focus:ring-blue-500 focus:border-blue-500 mb-3" 
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-650 uppercase mb-1">Admin Password <span className="text-red-500">*</span></label>
                 <input 
                   type="password" 
                   required
                   value={adminPassword} 
                   onChange={(e) => setAdminPassword(e.target.value)}
-                  placeholder="Enter secret key to authorize delete" 
+                  placeholder="Enter admin password to authorize delete" 
                   className="w-full border border-slate-300 rounded p-2 text-xs focus:ring-1 focus:ring-blue-500 focus:border-blue-500" 
                 />
               </div>
@@ -308,7 +327,7 @@ export default function Registry() {
               <div className="flex gap-2 justify-end pt-2">
                 <button
                   type="button"
-                  onClick={() => { setDeleteTarget(null); setDeleteError(''); setDeleteSuccess(''); }}
+                  onClick={() => { setDeleteTarget(null); setDeleteError(''); setAdminUsername(''); setAdminPassword(''); setDeleteSuccess(''); }}
                   className="px-4 py-2 border border-slate-300 hover:bg-slate-50 text-slate-700 text-xs font-semibold rounded shadow-sm transition-colors cursor-pointer"
                 >
                   Cancel

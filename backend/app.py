@@ -1,11 +1,12 @@
 import os
-import sqlite3
 import datetime
 import re
 from io import BytesIO
 from flask import Flask, request, jsonify, send_file
 from flask_cors import CORS
 from dotenv import load_dotenv
+from flask_sqlalchemy import SQLAlchemy
+from werkzeug.security import generate_password_hash, check_password_hash
 
 # Import core business logic
 from core.parser import parse_email_input, parse_email_bytes
@@ -19,38 +20,45 @@ app = Flask(__name__)
 # Enable CORS for frontend integration
 CORS(app)
 
-# SQLite database configuration
-DATABASE_DIR = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'instance')
-DATABASE_PATH = os.path.join(DATABASE_DIR, 'registry.db')
+# Database configuration
+DATABASE_URL = os.getenv("DATABASE_URL")
 
-ADMIN_SECRET_KEY = os.getenv("ADMIN_SECRET_KEY", "admin")
+app.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_URL
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+db = SQLAlchemy(app)
+
+class FlaggedIP(db.Model):
+    __tablename__ = 'flagged_ips'
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    ip = db.Column(db.String(45), nullable=False)
+    ip_address = db.Column(db.String(45), nullable=False)
+    reference_id = db.Column(db.String(30), nullable=False)
+    notes = db.Column(db.Text, nullable=True)
+    reason = db.Column(db.Text, nullable=True)
+    flagged_by = db.Column(db.String(100), nullable=False)
+    flagged_at = db.Column(db.DateTime, default=db.func.current_timestamp())
+    created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
+
+class Admin(db.Model):
+    __tablename__ = 'admins'
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    username = db.Column(db.String(100), unique=True, nullable=False)
+    password_hash = db.Column(db.String(255), nullable=False)
 
 def init_db():
-    """Initializes the SQLite database and index."""
-    os.makedirs(DATABASE_DIR, exist_ok=True)
-    conn = sqlite3.connect(DATABASE_PATH)
-    cursor = conn.cursor()
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS flagged_ips (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            ip TEXT NOT NULL,
-            reference_id TEXT NOT NULL,
-            notes TEXT,
-            flagged_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )
-    ''')
-    cursor.execute('CREATE INDEX IF NOT EXISTS idx_flagged_ips_ip ON flagged_ips(ip)')
-    cursor.execute('CREATE INDEX IF NOT EXISTS idx_flagged_ips_ref ON flagged_ips(reference_id)')
-    conn.commit()
-    conn.close()
+    """Initializes the database schema."""
+    if not DATABASE_URL:
+        print("WARNING: DATABASE_URL is not set. Skipping database initialization.")
+        return
+    try:
+        with app.app_context():
+            db.create_all()
+        print("Database initialized successfully.")
+    except Exception as e:
+        print(f"Error initializing database: {e}")
 
 # Initialize database on startup
 init_db()
-
-def get_db_connection():
-    conn = sqlite3.connect(DATABASE_PATH)
-    conn.row_factory = sqlite3.Row
-    return conn
 
 @app.route('/api/analyze', methods=['POST'])
 def analyze():
@@ -103,15 +111,13 @@ def analyze():
                         f"serve a legal notice to {provider} under Section 67C of the IT Act, 2000, "
                         f"quoting the Message-ID and timestamp from this email."
                     )
-            # Check local SQLite registry for previously flagged occurrences
-            conn = get_db_connection()
-            cursor = conn.cursor()
-            cursor.execute(
-                'SELECT reference_id, flagged_at, notes FROM flagged_ips WHERE ip = ? ORDER BY flagged_at DESC',
-                (originating_ip,)
-            )
-            flagged_history = [dict(row) for row in cursor.fetchall()]
-            conn.close()
+            # Check local PostgreSQL registry for previously flagged occurrences
+            records = FlaggedIP.query.filter_by(ip=originating_ip).order_by(FlaggedIP.flagged_at.desc()).all()
+            flagged_history = [{
+                "reference_id": r.reference_id,
+                "flagged_at": r.flagged_at.isoformat() if r.flagged_at else None,
+                "notes": r.notes
+            } for r in records]
             
         return jsonify({
             "headers": parsed_data,
@@ -135,7 +141,8 @@ def flag_ip():
     ip = data.get("ip")
     reference_id = data.get("reference_id")
     notes = data.get("notes", "")
-    admin_password = data.get("admin_password")
+    username = data.get("username")
+    password = data.get("password")
     
     # Validation
     if not ip or not reference_id:
@@ -144,23 +151,28 @@ def flag_ip():
     if len(reference_id) > 30:
         return jsonify({"error": "Reference ID must be 30 characters or less."}), 400
         
-    if not admin_password:
-        return jsonify({"error": "Admin password is required."}), 400
+    if not username or not password:
+        return jsonify({"error": "Admin credentials are required."}), 400
         
-    if admin_password != ADMIN_SECRET_KEY:
-        return jsonify({"error": "Incorrect admin password."}), 401
+    # Verify admin credentials
+    admin = Admin.query.filter_by(username=username).first()
+    if not admin or not check_password_hash(admin.password_hash, password):
+        return jsonify({"error": "Invalid credentials"}), 401
         
     try:
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        cursor.execute(
-            'INSERT INTO flagged_ips (ip, reference_id, notes) VALUES (?, ?, ?)',
-            (ip, reference_id, notes)
+        new_flag = FlaggedIP(
+            ip=ip,
+            ip_address=ip,
+            reference_id=reference_id,
+            notes=notes,
+            reason=notes,
+            flagged_by=username
         )
-        conn.commit()
-        conn.close()
+        db.session.add(new_flag)
+        db.session.commit()
         return jsonify({"success": True, "message": f"IP {ip} successfully flagged."}), 200
     except Exception as e:
+        db.session.rollback()
         return jsonify({"error": f"Database error: {str(e)}"}), 500
 
 @app.route('/api/registry', methods=['GET'])
@@ -170,32 +182,36 @@ def get_registry():
     start_date = request.args.get("start_date", "").strip() # YYYY-MM-DD
     end_date = request.args.get("end_date", "").strip() # YYYY-MM-DD
     
-    query = "SELECT id, ip, reference_id, notes, flagged_at FROM flagged_ips WHERE 1=1"
-    params = []
+    query = FlaggedIP.query
     
     if ip_query:
-        query += " AND ip LIKE ?"
-        params.append(f"%{ip_query}%")
+        query = query.filter(FlaggedIP.ip.like(f"%{ip_query}%"))
     if ref_query:
-        query += " AND reference_id LIKE ?"
-        params.append(f"%{ref_query}%")
+        query = query.filter(FlaggedIP.reference_id.like(f"%{ref_query}%"))
     if start_date:
-        query += " AND date(flagged_at) >= date(?)"
-        params.append(start_date)
+        try:
+            s_date = datetime.datetime.strptime(start_date, "%Y-%m-%d").date()
+            query = query.filter(db.cast(FlaggedIP.flagged_at, db.Date) >= s_date)
+        except ValueError:
+            pass
     if end_date:
-        query += " AND date(flagged_at) <= date(?)"
-        params.append(end_date)
-        
-    query += " ORDER BY flagged_at DESC"
+        try:
+            e_date = datetime.datetime.strptime(end_date, "%Y-%m-%d").date()
+            query = query.filter(db.cast(FlaggedIP.flagged_at, db.Date) <= e_date)
+        except ValueError:
+            pass
+            
+    query = query.order_by(FlaggedIP.flagged_at.desc())
     
     try:
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        cursor.execute(query, params)
-        rows = cursor.fetchall()
-        conn.close()
-        
-        results = [dict(row) for row in rows]
+        records = query.all()
+        results = [{
+            "id": r.id,
+            "ip": r.ip,
+            "reference_id": r.reference_id,
+            "notes": r.notes,
+            "flagged_at": r.flagged_at.isoformat() if r.flagged_at else None
+        } for r in records]
         return jsonify(results), 200
     except Exception as e:
         return jsonify({"error": f"Database query failed: {str(e)}"}), 500
@@ -204,33 +220,31 @@ def get_registry():
 def delete_flag():
     data = request.json or {}
     record_id = data.get("id")
-    admin_password = data.get("admin_password")
+    username = data.get("username")
+    password = data.get("password")
     
     if not record_id:
         return jsonify({"error": "Record ID is required."}), 400
         
-    if not admin_password:
-        return jsonify({"error": "Admin password is required."}), 400
+    if not username or not password:
+        return jsonify({"error": "Admin credentials are required."}), 400
         
-    if admin_password != ADMIN_SECRET_KEY:
-        return jsonify({"error": "Incorrect admin password."}), 401
+    # Verify admin credentials
+    admin = Admin.query.filter_by(username=username).first()
+    if not admin or not check_password_hash(admin.password_hash, password):
+        return jsonify({"error": "Invalid credentials"}), 401
         
     try:
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        
-        # Verify it exists
-        cursor.execute('SELECT id FROM flagged_ips WHERE id = ?', (record_id,))
-        if not cursor.fetchone():
-            conn.close()
+        record = FlaggedIP.query.get(record_id)
+        if not record:
             return jsonify({"error": "Record not found."}), 404
             
-        cursor.execute('DELETE FROM flagged_ips WHERE id = ?', (record_id,))
-        conn.commit()
-        conn.close()
+        db.session.delete(record)
+        db.session.commit()
         
         return jsonify({"success": True, "message": "Record successfully deleted."}), 200
     except Exception as e:
+        db.session.rollback()
         return jsonify({"error": f"Database delete failed: {str(e)}"}), 500
 
 @app.route('/api/registry/export', methods=['GET'])
@@ -240,41 +254,39 @@ def export_csv():
     start_date = request.args.get("start_date", "").strip()
     end_date = request.args.get("end_date", "").strip()
     
-    query = "SELECT ip, reference_id, notes, flagged_at FROM flagged_ips WHERE 1=1"
-    params = []
+    query = FlaggedIP.query
     
     if ip_query:
-        query += " AND ip LIKE ?"
-        params.append(f"%{ip_query}%")
+        query = query.filter(FlaggedIP.ip.like(f"%{ip_query}%"))
     if ref_query:
-        query += " AND reference_id LIKE ?"
-        params.append(f"%{ref_query}%")
+        query = query.filter(FlaggedIP.reference_id.like(f"%{ref_query}%"))
     if start_date:
-        query += " AND date(flagged_at) >= date(?)"
-        params.append(start_date)
+        try:
+            s_date = datetime.datetime.strptime(start_date, "%Y-%m-%d").date()
+            query = query.filter(db.cast(FlaggedIP.flagged_at, db.Date) >= s_date)
+        except ValueError:
+            pass
     if end_date:
-        query += " AND date(flagged_at) <= date(?)"
-        params.append(end_date)
-        
-    query += " ORDER BY flagged_at DESC"
+        try:
+            e_date = datetime.datetime.strptime(end_date, "%Y-%m-%d").date()
+            query = query.filter(db.cast(FlaggedIP.flagged_at, db.Date) <= e_date)
+        except ValueError:
+            pass
+            
+    query = query.order_by(FlaggedIP.flagged_at.desc())
     
     try:
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        cursor.execute(query, params)
-        rows = cursor.fetchall()
-        conn.close()
+        records = query.all()
         
         # Build CSV string
         import csv
         output = BytesIO()
-        # csv writer works with strings, so we wrap it
         from io import TextIOWrapper
         wrapper = TextIOWrapper(output, encoding='utf-8', newline='')
         writer = csv.writer(wrapper)
         writer.writerow(["IP Address", "Reference ID", "Notes", "Flagged At"])
-        for row in rows:
-            writer.writerow([row["ip"], row["reference_id"], row["notes"], row["flagged_at"]])
+        for r in records:
+            writer.writerow([r.ip, r.reference_id, r.notes, r.flagged_at.strftime('%Y-%m-%d %H:%M:%S') if r.flagged_at else ''])
         wrapper.flush()
         output.seek(0)
         
@@ -321,14 +333,12 @@ def generate_report():
     was_flagged_info = []
     if originating_ip:
         try:
-            conn = get_db_connection()
-            cursor = conn.cursor()
-            cursor.execute(
-                'SELECT reference_id, flagged_at, notes FROM flagged_ips WHERE ip = ? ORDER BY flagged_at DESC',
-                (originating_ip,)
-            )
-            was_flagged_info = [dict(row) for row in cursor.fetchall()]
-            conn.close()
+            records = FlaggedIP.query.filter_by(ip=originating_ip).order_by(FlaggedIP.flagged_at.desc()).all()
+            was_flagged_info = [{
+                "reference_id": r.reference_id,
+                "flagged_at": r.flagged_at.strftime('%Y-%m-%d %H:%M:%S') if r.flagged_at else '',
+                "notes": r.notes
+            } for r in records]
         except Exception:
             pass
             

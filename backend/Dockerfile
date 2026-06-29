@@ -19,9 +19,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy application files
 COPY . .
 
-# Create instance directory inside container for database
-RUN mkdir -p instance
-
 # Expose service port
 EXPOSE 5000
 

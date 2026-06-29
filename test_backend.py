@@ -2,15 +2,14 @@ import unittest
 import sys
 import os
 import json
-import sqlite3
-
 # Adjust python path to import backend modules
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'backend'))
 
 from core.parser import extract_public_ips, parse_email_input
 from core.analyzer import analyze_hops, analyze_authenticity, extract_domain
 from core.geolocation import detect_provider
-from app import app, init_db, DATABASE_PATH, ADMIN_SECRET_KEY
+from app import app, init_db, DATABASE_URL, db, FlaggedIP, Admin
+from werkzeug.security import generate_password_hash
 
 class TestEmailHeaderAnalyzer(unittest.TestCase):
     def setUp(self):
@@ -21,17 +20,27 @@ class TestEmailHeaderAnalyzer(unittest.TestCase):
         # Make sure database is initialized and clear it for tests
         init_db()
         self.clear_db()
+        
+        # Seed test admin user for registry flows
+        with app.app_context():
+            test_admin = Admin(
+                username="testadmin",
+                password_hash=generate_password_hash("testpass")
+            )
+            db.session.add(test_admin)
+            db.session.commit()
 
     def tearDown(self):
         self.clear_db()
 
     def clear_db(self):
-        if os.path.exists(DATABASE_PATH):
-            conn = sqlite3.connect(DATABASE_PATH)
-            c = conn.cursor()
-            c.execute('DELETE FROM flagged_ips')
-            conn.commit()
-            conn.close()
+        if DATABASE_URL:
+            with app.app_context():
+                db.session.query(FlaggedIP).delete()
+                db.session.query(Admin).delete()
+                db.session.commit()
+        else:
+            raise RuntimeError("DATABASE_URL environment variable is required to run tests.")
 
     def test_ip_extraction(self):
         raw_received = """from mail-io1-f169.google.com (mail-io1-f169.google.com [209.85.166.169])
@@ -102,18 +111,19 @@ class TestEmailHeaderAnalyzer(unittest.TestCase):
         self.assertEqual(res.status_code, 200)
         self.assertEqual(len(res.get_json()), 0)
 
-        # 2. Flag an IP (bad password)
+        # 2. Flag an IP (bad credentials)
         flag_payload = {
             "ip": "8.8.8.8",
             "reference_id": "REF-001",
             "notes": "Testing flagging flow",
-            "admin_password": "wrongpassword"
+            "username": "testadmin",
+            "password": "wrongpassword"
         }
         res_flag = self.client.post('/api/flag', data=json.dumps(flag_payload), content_type='application/json')
         self.assertEqual(res_flag.status_code, 401)
 
-        # 3. Flag an IP (correct password)
-        flag_payload["admin_password"] = ADMIN_SECRET_KEY
+        # 3. Flag an IP (correct credentials)
+        flag_payload["password"] = "testpass"
         res_flag = self.client.post('/api/flag', data=json.dumps(flag_payload), content_type='application/json')
         self.assertEqual(res_flag.status_code, 200)
         self.assertTrue(res_flag.get_json()["success"])
@@ -125,10 +135,11 @@ class TestEmailHeaderAnalyzer(unittest.TestCase):
         self.assertEqual(records[0]["reference_id"], "REF-001")
         record_id = records[0]["id"]
 
-        # 5. Delete flag (correct password)
+        # 5. Delete flag (correct credentials)
         delete_payload = {
             "id": record_id,
-            "admin_password": ADMIN_SECRET_KEY
+            "username": "testadmin",
+            "password": "testpass"
         }
         res_del = self.client.post('/api/registry/delete', data=json.dumps(delete_payload), content_type='application/json')
         self.assertEqual(res_del.status_code, 200)

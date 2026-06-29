@@ -22,6 +22,7 @@ export default function Dashboard() {
   const [showReportModal, setShowReportModal] = useState(false);
   
   // Flag IP form state
+  const [adminUsername, setAdminUsername] = useState('');
   const [adminPassword, setAdminPassword] = useState('');
   const [flagRefId, setFlagRefId] = useState('');
   const [flagNotes, setFlagNotes] = useState('');
@@ -79,6 +80,10 @@ export default function Dashboard() {
       setFlagError("Reference ID must be 30 characters or less.");
       return;
     }
+    if (!adminUsername.trim()) {
+      setFlagError("Admin username is required.");
+      return;
+    }
     if (!adminPassword) {
       setFlagError("Admin password is required.");
       return;
@@ -89,12 +94,14 @@ export default function Dashboard() {
         ip: analysisData.originating_ip,
         reference_id: flagRefId,
         notes: flagNotes,
-        admin_password: adminPassword
+        username: adminUsername,
+        password: adminPassword
       };
       
       await axiosInstance.post('/api/flag', payload);
       
       setFlagSuccess("IP successfully flagged!");
+      setAdminUsername('');
       setAdminPassword('');
       setFlagNotes('');
       
@@ -546,7 +553,7 @@ export default function Dashboard() {
                 <Flag className="w-4 h-4 text-red-500" />
                 Flag Originating IP
               </h3>
-              <button onClick={() => { setShowFlagModal(false); setFlagError(''); setFlagSuccess(''); }} className="text-slate-400 hover:text-slate-600">
+              <button onClick={() => { setShowFlagModal(false); setFlagError(''); setAdminUsername(''); setAdminPassword(''); setFlagSuccess(''); }} className="text-slate-400 hover:text-slate-600">
                 <X className="w-4 h-4" />
               </button>
             </div>
@@ -590,13 +597,25 @@ export default function Dashboard() {
               </div>
 
               <div>
+                <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Admin Username <span className="text-red-500">*</span></label>
+                <input 
+                  type="text" 
+                  required
+                  value={adminUsername} 
+                  onChange={(e) => setAdminUsername(e.target.value)}
+                  placeholder="Enter admin username" 
+                  className="w-full border border-slate-300 rounded p-2 text-xs focus:ring-1 focus:ring-blue-500 focus:border-blue-500 mb-3" 
+                />
+              </div>
+
+              <div>
                 <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Admin Password <span className="text-red-500">*</span></label>
                 <input 
                   type="password" 
                   required
                   value={adminPassword} 
                   onChange={(e) => setAdminPassword(e.target.value)}
-                  placeholder="Enter secret key to validate" 
+                  placeholder="Enter admin password to validate" 
                   className="w-full border border-slate-300 rounded p-2 text-xs focus:ring-1 focus:ring-blue-500 focus:border-blue-500" 
                 />
               </div>
@@ -615,7 +634,7 @@ export default function Dashboard() {
               <div className="flex gap-2 justify-end pt-2">
                 <button
                   type="button"
-                  onClick={() => { setShowFlagModal(false); setFlagError(''); setFlagSuccess(''); }}
+                  onClick={() => { setShowFlagModal(false); setFlagError(''); setAdminUsername(''); setAdminPassword(''); setFlagSuccess(''); }}
                   className="px-4 py-2 border border-slate-300 hover:bg-slate-50 text-slate-700 text-xs font-semibold rounded shadow-sm transition-colors cursor-pointer"
                 >
                   Cancel

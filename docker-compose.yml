@@ -10,9 +10,7 @@ services:
     environment:
       - ADMIN_SECRET_KEY=${ADMIN_SECRET_KEY:-admin123}
       - PORT=5000
-    volumes:
-      # Persistent storage for SQLite database registry.db
-      - registry_db:/app/instance
+      - DATABASE_URL=${DATABASE_URL}
     restart: unless-stopped
 
   frontend:
@@ -28,6 +26,3 @@ services:
     depends_on:
       - backend
     restart: unless-stopped
-
-volumes:
-  registry_db:

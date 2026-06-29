@@ -1,6 +1,6 @@
 # Email Header Analyzer (EHA)
 
-🛡️ **Email Header Analyzer** is a lightweight, responsive, and laser-printer-friendly forensic tool designed to parse electronic mail headers, map server relay hop chains chronologically, detect spoofing anomalies, geolocate originating IPs using parallel provider API calls, and audit security flags in a local persistent SQLite database.
+🛡️ **Email Header Analyzer** is a lightweight, responsive, and laser-printer-friendly forensic tool designed to parse electronic mail headers, map server relay hop chains chronologically, detect spoofing anomalies, geolocate originating IPs using parallel provider API calls, and audit security flags in a persistent Supabase PostgreSQL database.
 
 ---
 
@@ -13,7 +13,7 @@
 *   **Leaflet.js Map Widget:** Interactive OpenStreetMap mapping showcasing single or multiple pins based on provider consensus.
 *   **Reconstructed SMTP Hops:** Displays chronological vertical server paths, collapsing long Received headers.
 *   **PDF Forensic Reports:** Generates A4 printer-friendly black-and-white evidence reports.
-*   **Historical SQLite Registry:** Database registry of flagged originating IP addresses with search filters, admin password authorization, and CSV exports.
+*   **Historical PostgreSQL Registry:** Database registry of flagged originating IP addresses with search filters, admin password authorization, and CSV exports.
 
 ---
 
@@ -29,11 +29,9 @@ email-header-analyzer/
 ├── backend/                    # Flask REST API
 │   ├── Dockerfile              # Backend service image build instructions
 │   ├── requirements.txt        # Python packages list
-│   ├── app.py                  # API service routes and sqlite logic
+│   ├── app.py                  # API service routes and postgres database logic
 │   ├── .env                    # Local admin secret key config (Git ignored)
-│   ├── instance/               
-│   │   └── registry.db         # Persistent SQLite database (Git ignored)
-│   └── core/                   # Processing logic modules
+│   ├── core/                   # Processing logic modules
 │       ├── parser.py           # Extracting header dictionary
 │       ├── geolocation.py      # ThreadPool parallel API queries
 │       ├── analyzer.py         # Chronological hops and authenticity verdict
@@ -116,8 +114,8 @@ Follow these steps if you want to run the applications directly on your host ope
 
 4.  **Configure `.env` File:** Create a `.env` file inside the `backend/` directory:
     ```ini
-    ADMIN_SECRET_KEY=your_secure_password
     PORT=5000
+    DATABASE_URL=postgresql://postgres:[YOUR-PASSWORD]@db.[YOUR-PROJECT-REF].supabase.co:5432/postgres
     ```
 
 5.  **Run Development Server:**
@@ -147,3 +145,43 @@ Follow these steps if you want to run the applications directly on your host ope
     npm run dev
     ```
     Open your browser and navigate to the printed URL (typically `http://localhost:3000` or `http://localhost:5173`).
+
+---
+
+## 🗄️ Database Initialization & Admin Setup
+
+This project uses **Supabase PostgreSQL** as its database backend.
+
+### 1. Configure the `DATABASE_URL`
+Ensure that the `DATABASE_URL` environment variable is configured in your `.env` file pointing to your Supabase PostgreSQL instance:
+```ini
+PORT=5000
+DATABASE_URL=postgresql://postgres:[YOUR-PASSWORD]@db.[YOUR-PROJECT-REF].supabase.co:5432/postgres
+```
+*Note: The old `ADMIN_SECRET_KEY` environment variable has been removed entirely.*
+
+### 2. Initialize Database Tables
+On first deploy, initialize all database tables (creating `flagged_ips` and `admins` tables) on Supabase PostgreSQL by running the initialization via the Flask shell (run once only):
+```bash
+cd backend
+flask shell
+```
+Inside the Flask shell, run:
+```python
+from app import db
+db.create_all()
+exit()
+```
+
+### 3. Create Admin Account Manually
+To create the first admin account, run the following SQL query in your **Supabase SQL Editor** to insert the default admin user with a pre-hashed password:
+```sql
+INSERT INTO admins (username, password_hash)
+VALUES ('admin', 'scrypt:32768:8:1$Xb8UeuatdOKKQvou$77c554c657e1a7eed57f1b731516193732810659b102124e290a8f8563ccae1c10e694e5e9f12ec2a02f5155dc8d6f1eec8dfbb96b8f0b910bc79e8e901e65c3');
+```
+This will create a default administrator account:
+*   **Username:** `admin`
+*   **Password:** `admin987`
+
+> [!IMPORTANT]
+> Make sure to change the default admin password after your first login to ensure registry security.

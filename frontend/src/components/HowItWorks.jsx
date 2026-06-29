@@ -55,10 +55,10 @@ const API_CARDS = [
     free: true,
   },
   {
-    name: 'SQLite Registry',
-    role: 'Local Flagged IP Database',
-    desc: 'A local SQLite database stores analyst-flagged IPs with reference IDs, notes, and timestamps. On each analysis, the originating IP is checked against this registry for prior flags.',
-    endpoint: 'Local — /instance/registry.db',
+    name: 'PostgreSQL Registry',
+    role: 'Flagged IP Database',
+    desc: 'A persistent PostgreSQL database stores analyst-flagged IPs with reference IDs, notes, and timestamps. On each analysis, the originating IP is checked against this registry for prior flags.',
+    endpoint: 'Supabase PostgreSQL',
     icon: Database,
     color: 'slate',
     free: false,
@@ -236,7 +236,7 @@ export default function HowItWorks() {
               <span className="text-xs font-bold text-slate-700">Privacy Note</span>
             </div>
             <p className="text-[11px] text-slate-500 leading-relaxed">
-              All analysis runs on your local server. Email headers are never stored or transmitted to third parties — only the originating IP is sent to geolocation APIs for lookup. The flagged IP registry is stored locally in SQLite.
+              All analysis runs on your local server. Email headers are never stored or transmitted to third parties — only the originating IP is sent to geolocation APIs for lookup. The flagged IP registry is stored in a persistent PostgreSQL database.
             </p>
           </div>
         </div>
